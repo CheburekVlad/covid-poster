@@ -3,6 +3,7 @@ setwd(path)
 library(dplyr)
 
 days = tools::file_path_sans_ext(list.files(path, pattern = "\\.csv")[61:1143])
+country= 
 
 X = function(file){
   Data <- read.csv(file)
