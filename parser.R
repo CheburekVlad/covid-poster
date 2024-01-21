@@ -1,6 +1,7 @@
 path <<- "/home/cheburek/Desktop/csse_covid_19_daily_reports"
 setwd(path)
 library(dplyr)
+library(tidyr)
 library(countrycode)
 
 days = tools::file_path_sans_ext(list.files(path, pattern = "\\.csv")[61:1143])
@@ -76,7 +77,30 @@ get_countries = function(){
   return(df[,c(1,3)])
 }
 
-
-
 l = read(path)
 cont_count = get_countries()
+
+day_to_day = function(list){
+  data = bind_rows(l, .id = "Day")[,c(1,2,3)]
+  day_data = data %>%
+    pivot_wider(names_from = Day, values_from = Confirmed) %>%
+    arrange(Country_Region)
+  day_data[is.na(day_data)]<- 0
+  num = data.frame(rep(1,202),day_data[,-1])
+  dif = (data.frame(day_data[,-1],rep(0,202)) - num)[-46,-1084]
+  dif[dif<0] <- 0
+  dtd = data.frame(cont_count$continent,dif)
+  colnames(dtd) <- c("Continent",names(l))
+  row.names(dtd) <- cont_count$country
+  dtd = dtd %>%
+    group_by(Continent) %>%
+    summarise(across(starts_with("20"), sum))
+  return(dtd)
+}
+
+
+
+dtd = day_to_day(l)
+date = as.Date(as.character(colnames(dtd)[-1]),format = "%Y%m%d")
+plot(date,dtd[2,-1],type ="l")
+
